@@ -1,0 +1,25 @@
+# Ignore virtual environment and env files
+venv/
+.env
+
+# Logs and error files
+logs/
+error.log
+
+# Build 
+dist/
+build/
+
+# Python cache
+_pycache_/
+**/_pycache_/
+
+# Egg-info
+networkSecurity.egg-info/
+
+# Ignore all subfolder _pycache_ (redundant now due to **/_pycache_/)
+training_pipeline/_pycache_/
+constant/_pycache_/
+components/_pycache_/
+entity/_pycache_/
+
