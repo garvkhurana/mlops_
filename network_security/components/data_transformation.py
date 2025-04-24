@@ -19,6 +19,8 @@ class DataTransformatiion:
 
 
     def data_loading(self,train_data,test_data):
+       pass
+    
        
            
 
