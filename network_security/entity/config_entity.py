@@ -50,17 +50,16 @@ class DataIngestionConfig:
 
 
 class DataTransformationConfig:
-    def __init__(self,training_pipleine_config:TrainingPipelineConfig):
-        self.preprocessor_config:str = os.path.join(training_pipeline.PREPROCESSOR_DIR_NAME,
-                                                 training_pipeline.P_AND_S_STORE_DIR,training_pipeline.PREPROCESSOR)
-        self.scaler_config:str = os.path.join(training_pipeline.P_AND_S_STORE_DIR,training_pipeline.SCALER_DIR_NAME,
-                                              training_pipeline.STANDARDSCALER)
+    def __init__(self):
+        self.scaler_config: str = os.path.join(training_pipeline.ARTIFACT_NAME, training_pipeline.STANDARDSCALER)
+
 
 
 
 class ModelTrainerConfig:
-    def __init__(self,training_pipleine_config:TrainingPipelineConfig)    :
-        pass
+    def __init__(self):
+        self.model_config : str = os.path.join(training_pipeline.ARTIFACT_NAME,training_pipeline.MODEL)
+        
     
                                               
 

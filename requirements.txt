@@ -6,5 +6,9 @@ certifi
 scikit-learn
 pymongo[srv]==3.12
 dvc[s3]
+dill
+catboost
+xgboost
 
 -e .
+

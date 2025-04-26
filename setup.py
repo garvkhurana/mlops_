@@ -1,7 +1,7 @@
 from setuptools import find_packages,setup
 """what this find_packages module will do 
 it will scan all the folders and where there will be a __init__ file it will consider
-that folder as a package
+that folder aKhuranas a package
 """
 from typing import List
 
@@ -33,7 +33,7 @@ This function will return the list of requirements
 setup(
     name="networkSecurity",
     version="0.0.1",
-    author="Garv Khurana",
+    author="Garv ",
     author_email="garvkhurana1234567@gmail.com",
     packages=find_packages(),
     install_requires=get_requirements()
