@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/garvk/Desktop/project/1st_end_to_end_using_mlops/mlruns/627877945730886264/10519e2131e744e58484cc26db863ae3/artifacts
+end_time: 1745790263934
+entry_point_name: ''
+experiment_id: '627877945730886264'
+lifecycle_stage: active
+run_id: 10519e2131e744e58484cc26db863ae3
+run_name: redolent-roo-119
+run_uuid: 10519e2131e744e58484cc26db863ae3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745790254571
+status: 3
+tags: []
+user_id: garvk
