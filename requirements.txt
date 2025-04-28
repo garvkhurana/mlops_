@@ -11,6 +11,8 @@ catboost
 xgboost
 mlflow
 fastapi 
+bs4
+whois
 
 
 
