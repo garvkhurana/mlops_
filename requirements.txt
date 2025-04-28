@@ -9,12 +9,9 @@ dvc[s3]
 dill
 catboost
 xgboost
-mlflow
-fastapi 
+mlflow 
 bs4
 whois
-
-
-
+python-multipart
 -e .
 

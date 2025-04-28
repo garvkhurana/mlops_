@@ -1,51 +1,70 @@
-from network_security.exception.exception import NetworkSecurityException
+from flask import Flask, render_template, request
 import sys
-from fastapi import FastAPI, HTTPException, Form
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import Dict, Any
-from network_security.constant.prediction_pipeline import CustomData,URLAnalyzer,PredictionPipeline
-import joblib
+import os
+from network_security.constant.prediction_pipeline import CustomData, URLAnalyzer, PredictionPipeline
+from network_security.exception.exception import NetworkSecurityException
 
-from fastapi.templating import Jinja2Templates
-from fastapi import Request
+app = Flask(__name__)
 
-app = FastAPI()
-
-
-templates = Jinja2Templates(directory="templates")
-
-
-prediction_pipeline = PredictionPipeline()
-
-class URLInput(BaseModel):
-    url: str
-
-@app.get("/", response_class=HTMLResponse)
-async def get_home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-@app.post("/predict/", response_class=HTMLResponse)
-async def predict_url(url: str = Form(...)):
-    try:
-        
-        analyzer = URLAnalyzer()
-        features_dict = analyzer.extract_features(url)
-
-       
-        custom_data = CustomData(**features_dict)
-
-       
-        input_df = custom_data.get_pandas_dataframe()
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        url = request.form.get("url")
 
         
-        prediction = prediction_pipeline.model_prediction(input_df)
+        try:
+            
+            analyzer = URLAnalyzer()
+            features_array = analyzer.extract_features(url)
 
+            
+            custom_data = CustomData(
+                having_IP_Address=features_array[0][0],
+                URL_Length=features_array[0][1],
+                Shortining_Service=features_array[0][2],
+                having_At_Symbol=features_array[0][3],
+                double_slash_redirecting=features_array[0][4],
+                Prefix_Suffix=features_array[0][5],
+                having_Sub_Domain=features_array[0][6],
+                SSLfinal_State=features_array[0][7],
+                Domain_registeration_length=features_array[0][8],
+                Favicon=features_array[0][9],
+                port=features_array[0][10],
+                HTTPS_token=features_array[0][11],
+                Request_URL=features_array[0][12],
+                URL_of_Anchor=features_array[0][13],
+                Links_in_tags=features_array[0][14],
+                SFH=features_array[0][15],
+                Submitting_to_email=features_array[0][16],
+                Abnormal_URL=features_array[0][17],
+                Redirect=features_array[0][18],
+                on_mouseover=features_array[0][19],
+                RightClick=features_array[0][20],
+                popUpWidnow=features_array[0][21],
+                Iframe=features_array[0][22],
+                age_of_domain=features_array[0][23],
+                DNSRecord=features_array[0][24],
+                web_traffic=features_array[0][25],
+                Page_Rank=features_array[0][26],
+                Google_Index=features_array[0][27],
+                Links_pointing_to_page=features_array[0][28],
+                Statistical_report=features_array[0][29]
+            )
+
+           
+            input_df = custom_data.get_pandas_dataframe()
+
+          
+            pipeline = PredictionPipeline()
+            prediction = pipeline.predict(input_df)
+
+            result = "Malicious" if prediction[0] == -1 else "Safe"
+            return render_template('index.html', result=result, url=url)
         
-        if prediction[0] == 1:
-            return templates.TemplateResponse("index.html", {"request": {}, "result": "Phishing Website Detected!", "prediction_class": "phishing"})
-        else:
-            return templates.TemplateResponse("index.html", {"request": {}, "result": "Legitimate Website", "prediction_class": "safe"})
+        except Exception as e:
+            return render_template('index.html', result="Error", error_message=str(e))
 
-    except Exception as e:
-        raise NetworkSecurityException(e,sys)
+    return render_template('index.html')
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0',port=5000,debug=True)

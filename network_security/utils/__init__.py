@@ -4,7 +4,7 @@ from network_security.exception.exception import NetworkSecurityException
 from network_security.logging.logger import logging
 import numpy as np 
 import pandas as pd
-import dill
+import pickle
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
 
@@ -88,7 +88,7 @@ def print_evaluated_results(xtrain,ytrain,xtest,ytest,model):
 def load_object(file_path):
     try:
         with open(file_path,'rb') as file_obj:
-            return dill.load(file_obj)
+            return pickle.load(file_obj)
     except Exception as e:
         logging.info('Exception Occured in load_object function utils')
         raise NetworkSecurityException(e,sys)
