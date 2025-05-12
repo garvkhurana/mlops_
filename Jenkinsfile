@@ -56,22 +56,20 @@ pipeline {
         }
 
         stage('Deploy to EC2') {
-            steps {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins_user', variable: 'Key')]) {
-                    script {
-                        def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                        bat """
-                            ssh -o StrictHostKeyChecking=no -i $EC2_SSH_KEY_PATH $EC2_SSH_USER@$EC2_INSTANCE_IP << 'EOF'
-                                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
-                                docker pull ${fullImage}
-                                docker stop garv_container || true
-                                docker rm garv_container || true
-                                docker run -d --name garv_container -p 5000:5000 ${fullImage}
-                            EOF
-                        """
-                    }
-                }
+    steps {
+        withCredentials([sshUserPrivateKey(credentialsId: 'jenkins_user', keyFileVariable: 'SSH_KEY_PATH', usernameVariable: 'EC2_USER')]) {
+            script {
+                def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
+                bat """
+                    ssh -o StrictHostKeyChecking=no -i %SSH_KEY_PATH% %EC2_USER%@${EC2_INSTANCE_IP} ^
+                    "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY} && ^
+                    docker pull ${fullImage} && ^
+                    docker stop garv_container || true && ^
+                    docker rm garv_container || true && ^
+                    docker run -d --name garv_container -p 5000:5000 ${fullImage}"
+                """
             }
         }
     }
 }
+
