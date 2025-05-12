@@ -28,7 +28,7 @@ pipeline {
 
         stage('Login to AWS ECR') {
             steps {
-                withCredentials([[
+                withCredentials([[ 
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: 'aws'
                 ]]) {
@@ -56,23 +56,25 @@ pipeline {
         }
 
         stage('Deploy to EC2') {
-    steps {
-     stage('Deploy to EC2') {
-    steps {
-        withCredentials([sshUserPrivateKey(credentialsId: 'jenkins_user', keyFileVariable: 'SSH_KEY_PATH', usernameVariable: 'EC2_USER')]) {
-            script {
-                def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                bat """
-                    ssh -o StrictHostKeyChecking=no -i %SSH_KEY_PATH% %EC2_USER%@${EC2_INSTANCE_IP} ^
-                    "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY} && ^
-                    docker pull ${fullImage} && ^
-                    docker stop garv_container || true && ^
-                    docker rm garv_container || true && ^
-                    docker run -d --name garv_container -p 5000:5000 ${fullImage}"
-                """
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'jenkins_user',
+                    keyFileVariable: 'SSH_KEY_PATH',
+                    usernameVariable: 'EC2_USER'
+                )]) {
+                    script {
+                        def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
+                        bat """
+                            ssh -o StrictHostKeyChecking=no -i %SSH_KEY_PATH% %EC2_USER%@${EC2_INSTANCE_IP} ^
+                            "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY} && ^
+                            docker pull ${fullImage} && ^
+                            docker stop garv_container || true && ^
+                            docker rm garv_container || true && ^
+                            docker run -d --name garv_container -p 5000:5000 ${fullImage}"
+                        """
+                    }
+                }
             }
         }
     }
 }
-
-
