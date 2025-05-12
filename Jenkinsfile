@@ -6,7 +6,7 @@ pipeline {
         ECR_REPO = 'garv'
         ECR_REGISTRY = '970547369783.dkr.ecr.us-east-1.amazonaws.com'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        EC2_INSTANCE_IP = '18.234.194.49'
+        EC2_INSTANCE_IP = '54.81.45.32'
         EC2_SSH_USER = 'ubuntu'  
     }
 
