@@ -3,11 +3,11 @@ pipeline {
 
     environment {
         AWS_REGION = 'us-east-1'
-        ECR_REPO = 'your-ecr-repo-name'
-        ECR_REGISTRY = 'aws_account_id.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REPO = 'garv'
+        ECR_REGISTRY = '970547369783.dkr.ecr.us-east-1.amazonaws.com'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        EC2_INSTANCE_IP = 'your-ec2-instance-public-ip'
-        EC2_SSH_USER = 'ec2-user'  // Replace if needed
+        EC2_INSTANCE_IP = '18.234.194.49'
+        EC2_SSH_USER = 'ubuntu'  
     }
 
     stages {
@@ -20,8 +20,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def image = "mlops_app:${IMAGE_TAG}"
-                    sh "docker build -t ${image} ."
+                    def image = "url:${IMAGE_TAG}"
+                    bat "docker build -t ${image} ."
                 }
             }
         }
@@ -32,7 +32,7 @@ pipeline {
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: 'aws-credentials-id'
                 ]]) {
-                    sh """
+                    bat """
                         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
                         aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
                         aws configure set region $AWS_REGION
@@ -45,9 +45,9 @@ pipeline {
         stage('Push Image to ECR') {
             steps {
                 script {
-                    def image = "mlops_app:${IMAGE_TAG}"
+                    def image = "url:${IMAGE_TAG}"
                     def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                    sh """
+                    bat """
                         docker tag ${image} ${fullImage}
                         docker push ${fullImage}
                     """
@@ -60,7 +60,7 @@ pipeline {
                 withCredentials([file(credentialsId: 'ec2-ssh-key-id', variable: 'EC2_SSH_KEY_PATH')]) {
                     script {
                         def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                        sh """
+                        bat """
                             ssh -o StrictHostKeyChecking=no -i $EC2_SSH_KEY_PATH $EC2_SSH_USER@$EC2_INSTANCE_IP << 'EOF'
                                 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
                                 docker pull ${fullImage}
