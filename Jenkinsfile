@@ -30,7 +30,7 @@ pipeline {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-credentials-id'
+                    credentialsId: 'aws'
                 ]]) {
                     bat """
                         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
