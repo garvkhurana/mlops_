@@ -57,7 +57,7 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                withCredentials([file(credentialsId: 'jenkins_user', variable: 'Key')]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins_user', variable: 'Key')]) {
                     script {
                         def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
                         bat """
