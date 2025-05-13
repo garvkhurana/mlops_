@@ -61,12 +61,12 @@ pipeline {
               script {
                 def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
                 bat """
-                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_INSTANCE_IP} ^
-                        "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY} && ^
-                        docker pull ${fullImage} && ^
-                        docker stop garv_container || true && ^
-                        docker rm garv_container || true && ^
-                        docker run -d --name garv_container -p 5000:5000 ${fullImage}"
+                     ssh -o StrictHostKeyChecking=no -i %SSH_KEY_PATH% %EC2_USER%@${EC2_INSTANCE_IP} ^ 
+                        "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY} ^ 
+                        && docker pull ${fullImage} ^ 
+                        && docker stop garv_container || exit /b 0 ^ 
+                        && docker rm garv_container || exit /b 0 ^ 
+                        && docker run -d --name garv_container -p 5000:5000 ${fullImage}"
                 """
                     }
                 }
