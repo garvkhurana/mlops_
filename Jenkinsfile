@@ -7,7 +7,7 @@ pipeline {
         ECR_REGISTRY = '970547369783.dkr.ecr.us-east-1.amazonaws.com'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         EC2_INSTANCE_IP = '54.81.45.32'
-        EC2_SSH_USER = 'ubuntu'  
+        EC2_SSH_USER = 'ubuntu'
     }
 
     stages {
@@ -55,7 +55,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to EC2 via WSL') {
+        stage('Deploy to EC2') {
             steps {
                 withCredentials([sshUserPrivateKey(
                     credentialsId: 'jenkins_user',
@@ -64,20 +64,13 @@ pipeline {
                 )]) {
                     script {
                         def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                        def accessKey = env.AWS_ACCESS_KEY_ID
-                        def secretKey = env.AWS_SECRET_ACCESS_KEY
                         bat """
-                            wsl bash -c "sudo apt update && sudo apt install -y docker.io awscli openssh-client &&
-                            sudo service docker start || sudo systemctl start docker &&
-                            aws configure set aws_access_key_id '${accessKey}' &&
-                            aws configure set aws_secret_access_key '${secretKey}' &&
-                            aws configure set region '${AWS_REGION}' &&
-                            ssh -o StrictHostKeyChecking=no -i '${SSH_KEY_PATH}' ${EC2_USER}@${EC2_INSTANCE_IP} '
+                            ssh -o StrictHostKeyChecking=no -i %SSH_KEY_PATH% %EC2_USER%@${EC2_INSTANCE_IP} ^
+                                "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY} &&
                                 docker pull ${fullImage} &&
                                 docker stop garv_container || true &&
                                 docker rm garv_container || true &&
-                                docker run -d --name garv_container -p 5000:5000 ${fullImage}
-                            '"
+                                docker run -d --name garv_container -p 5000:5000 ${fullImage}"
                         """
                     }
                 }
