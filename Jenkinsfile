@@ -7,7 +7,7 @@ pipeline {
         ECR_REGISTRY = '970547369783.dkr.ecr.us-east-1.amazonaws.com'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         EC2_INSTANCE_IP = '54.81.45.32'
-        EC2_SSH_USER = 'ubuntu'
+        EC2_SSH_USER = 'ubuntu'  
     }
 
     stages {
@@ -21,11 +21,7 @@ pipeline {
             steps {
                 script {
                     def image = "url:${IMAGE_TAG}"
-                    if (isUnix()) {
-                        sh "docker build -t ${image} ."
-                    } else {
-                        bat "docker build -t ${image} ."
-                    }
+                    bat "docker build -t ${image} ."
                 }
             }
         }
@@ -36,17 +32,12 @@ pipeline {
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: 'aws'
                 ]]) {
-                    script {
-                        if (isUnix()) {
-                            sh """
-                                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-                            """
-                        } else {
-                            bat """
-                                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-                            """
-                        }
-                    }
+                    bat """
+                        aws configure set aws_access_key_id %AWS_ACCESS_KEY_ID%
+                        aws configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY%
+                        aws configure set region ${AWS_REGION}
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                    """
                 }
             }
         }
@@ -56,22 +47,15 @@ pipeline {
                 script {
                     def image = "url:${IMAGE_TAG}"
                     def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                    if (isUnix()) {
-                        sh """
-                            docker tag ${image} ${fullImage}
-                            docker push ${fullImage}
-                        """
-                    } else {
-                        bat """
-                            docker tag ${image} ${fullImage}
-                            docker push ${fullImage}
-                        """
-                    }
+                    bat """
+                        docker tag ${image} ${fullImage}
+                        docker push ${fullImage}
+                    """
                 }
             }
         }
 
-        stage('Deploy to EC2') {
+        stage('Deploy to EC2 via WSL') {
             steps {
                 withCredentials([sshUserPrivateKey(
                     credentialsId: 'jenkins_user',
@@ -80,35 +64,21 @@ pipeline {
                 )]) {
                     script {
                         def fullImage = "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                        
-                        // Use SSH to deploy Docker image on EC2
-                        if (isUnix()) {
-                            sh """
-                                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH} ${EC2_USER}@${EC2_INSTANCE_IP} "
-                                sudo apt-get update -y && 
-                                sudo apt-get install -y docker.io awscli && 
-                                sudo systemctl start docker && 
-                                sudo systemctl enable docker && 
-                                aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REGISTRY} && 
-                                docker pull ${fullImage} && 
-                                docker stop garv_container 2>/dev/null && 
-                                docker rm garv_container 2>/dev/null && 
-                                docker run -d --name garv_container -p 5000:5000 ${fullImage}"
-                            """
-                        } else {
-                            bat """
-                                ssh -o StrictHostKeyChecking=no -i %SSH_KEY_PATH% %EC2_USER%@${EC2_INSTANCE_IP} ^
-                                "sudo apt-get update -y && ^
-                                sudo apt-get install -y docker.io awscli && ^
-                                sudo systemctl start docker && ^
-                                sudo systemctl enable docker && ^
-                                aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REGISTRY} && ^
-                                docker pull ${fullImage} && ^
-                                docker stop garv_container 2>/dev/null && ^
-                                docker rm garv_container 2>/dev/null && ^
-                                docker run -d --name garv_container -p 5000:5000 ${fullImage}"
-                            """
-                        }
+                        def accessKey = env.AWS_ACCESS_KEY_ID
+                        def secretKey = env.AWS_SECRET_ACCESS_KEY
+                        bat """
+                            wsl bash -c "sudo apt update && sudo apt install -y docker.io awscli openssh-client &&
+                            sudo service docker start || sudo systemctl start docker &&
+                            aws configure set aws_access_key_id '${accessKey}' &&
+                            aws configure set aws_secret_access_key '${secretKey}' &&
+                            aws configure set region '${AWS_REGION}' &&
+                            ssh -o StrictHostKeyChecking=no -i '${SSH_KEY_PATH}' ${EC2_USER}@${EC2_INSTANCE_IP} '
+                                docker pull ${fullImage} &&
+                                docker stop garv_container || true &&
+                                docker rm garv_container || true &&
+                                docker run -d --name garv_container -p 5000:5000 ${fullImage}
+                            '"
+                        """
                     }
                 }
             }
